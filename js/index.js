@@ -7,10 +7,9 @@ var exportedResults = null; // 用于临时存储导出的数据
 $(function () {
     console.log("页面开始初始化...");
 
-    // 奖项配置顺序：特别奖30人 → 特等奖20人 → 三等奖10人 → 二等奖5人 → 一等奖1人
+    // 奖项配置顺序：特别奖30人 → 三等奖10人 → 二等奖5人 → 一等奖1人
     var awardSequence = [
         { id: 2005, name: "特别奖", count: 30 },
-        { id: 2004, name: "特等奖", count: 20 },
         { id: 2001, name: "三等奖", count: 10 },
         { id: 2002, name: "二等奖", count: 5 },
         { id: 2003, name: "一等奖", count: 1 }
@@ -21,8 +20,8 @@ $(function () {
 
     // 初始化变量
     var selfModuleName = 'slotmachine';
-    var scrollTime = 1000; // 滚动速度
-    var IntervalTimer = parseInt(Math.random() * 300); // 间隔时间
+    var scrollTime = 800; // 将滚动速度统一设置为800ms（更快）
+    var IntervalTimer = 50; // 间隔时间统一设置
     var scrollNumber = 5; // 滚动列数,默认有5个
     var prizeID = 0; // 奖品ID
     var prizeNumber = 10; // 抽奖人数
@@ -219,77 +218,79 @@ var updateLotteryInfo = function() {
     };
 
     // ========== 修复的开始抽奖函数 ==========
-    var beginTiger = function () {
-        console.log("开始摇奖，当前奖项:", currentAwardIndex, "奖项ID:", prizeID, "抽奖人数:", prizeNumber);
 
-        if (autoSequenceCompleted) {
-            CommonShowInfo("所有奖项已抽完！", 0);
-            return false;
-        }
+    // ========== 修复的开始抽奖函数 ==========
+var beginTiger = function () {
+    console.log("开始摇奖，当前奖项:", currentAwardIndex, "奖项ID:", prizeID, "抽奖人数:", prizeNumber);
 
+    if (autoSequenceCompleted) {
+        CommonShowInfo("所有奖项已抽完！", 0);
+        return false;
+    }
+
+    if (prizeID == 0) {
+        initCurrentAward();
         if (prizeID == 0) {
-            initCurrentAward();
-            if (prizeID == 0) {
-                CommonShowInfo("抽奖初始化失败！", 0);
-                return false;
-            }
-        }
-
-        prizeUserStr = '';
-
-        if (prizeNumber > userArray.length) {
-            CommonShowInfo("抽奖人数不够!");
+            CommonShowInfo("抽奖初始化失败！", 0);
             return false;
         }
+    }
 
-        // 获取当前奖项剩余数量
-        var $prizeItem = $('#option_slotPrize a[data-prizeid=' + prizeID + '] label');
-        var currentCount = parseInt($prizeItem.html());
+    prizeUserStr = '';
 
-        if (prizeNumber > currentCount) {
-            CommonShowInfo("奖品数量不够哒!");
-            return false;
+    if (prizeNumber > userArray.length) {
+        CommonShowInfo("抽奖人数不够!");
+        return false;
+    }
+
+    // 获取当前奖项剩余数量
+    var $prizeItem = $('#option_slotPrize a[data-prizeid=' + prizeID + '] label');
+    var currentCount = parseInt($prizeItem.html());
+
+    if (prizeNumber > currentCount) {
+        CommonShowInfo("奖品数量不够哒!");
+        return false;
+    }
+
+    // 关键修复：添加 beginTiger_on 类
+    $('.beginTiger').addClass('beginTiger_on');
+
+    // 更新按钮状态
+    updateLotteryButton();
+
+    // 播放滚动音效
+    playRollSound();
+
+    // 添加遮罩
+    $("#tigerSelect").append('<div class="shade1"></div><div class="shade2"></div>');
+
+    // 开始滚动 - 统一滚动时间，不再乘以 scrollNumber/4
+    $('.tigerList').each(function (i) {
+        var ulBox = $(this).find('ul');
+        var _height = ulBox.children().size() * ulHeightHalf;
+        ulBox.height(_height);
+        if (ulBox.children().size() > 2) {
+            setTimeout(function () {
+                $(".tigerList").removeClass("wait");
+                // 统一使用固定的 scrollTime，不再乘以 (scrollNumber / 4)
+                beginScroll(ulBox, _height, scrollTime);
+            }, IntervalTimer * i);
+        } else if (ulBox.children().size() == 0) {
+            ulBox.parent().remove();
         }
+    });
 
-        // 关键修复：添加 beginTiger_on 类
-        $('.beginTiger').addClass('beginTiger_on');
+    console.log("抽奖已开始");
+    return true;
+};
 
-        // 更新按钮状态
-        updateLotteryButton();
-
-        // 播放滚动音效
-        playRollSound();
-
-        // 添加遮罩
-        $("#tigerSelect").append('<div class="shade1"></div><div class="shade2"></div>');
-
-        // 开始滚动
-        $('.tigerList').each(function (i) {
-            var ulBox = $(this).find('ul');
-            var _height = ulBox.children().size() * ulHeightHalf;
-            ulBox.height(_height);
-            if (ulBox.children().size() > 2) {
-                setTimeout(function () {
-                    $(".tigerList").removeClass("wait");
-                    beginScroll(ulBox, _height, scrollTime * (scrollNumber / 4));
-                }, IntervalTimer * i);
-            } else if (ulBox.children().size() == 0) {
-                ulBox.parent().remove();
-            }
-        });
-
-        console.log("抽奖已开始");
-        return true;
-    };
-
-    // 滚动函数
-    var beginScroll = function (obj, height, timer) {
-        obj.animate({'top': -height / 2 + ulHeightHalf + 'px'}, timer, 'linear', function () {
-            obj.css('top', -(height - ulHeight) + 'px');
-            beginScroll(obj, height, timer);
-        });
-    };
-
+// 滚动函数
+var beginScroll = function (obj, height, timer) {
+    obj.animate({'top': -height / 2 + ulHeightHalf + 'px'}, timer, 'linear', function () {
+        obj.css('top', -(height - ulHeight) + 'px');
+        beginScroll(obj, height, timer); // 使用相同的timer参数
+    });
+};
     // ========== 修复的停止抽奖函数 ==========
     var stopTiger = function () {
         console.log("停止抽奖");
@@ -426,8 +427,9 @@ var updateLotteryInfo = function() {
     };
 
     // ========== 新增：自动确认中奖人员函数 ==========
-    var autoConfirmWinners = function() {
-        console.log("自动确认中奖人员，人数:", pendingWinnerCount);
+    // ========== 新增：自动确认中奖人员函数 ==========
+var autoConfirmWinners = function() {
+    console.log("自动确认中奖人员，人数:", pendingWinnerCount);
 
     var $prizeItem = $('#option_slotPrize a[data-prizeid=' + pendingPrizeId + '] label');
     var currentCount = parseInt($prizeItem.html());
@@ -439,80 +441,78 @@ var updateLotteryInfo = function() {
 
     var newCount = currentCount - pendingWinnerCount;
 
-
-        // 保存抽奖结果
-        var prizeName = $('#option_slotPrize a[data-prizeid=' + pendingPrizeId + '] div').text();
-        var winnersWithPhone = pendingWinners.map(function (winner) {
-            var originalUser = userArray.find(function (u) {
-                return u.Id == winner.id;
-            });
-            return {
-                id: winner.id,
-                name: winner.name,
-                phone: originalUser ? originalUser.Phone : ''
-            };
+    // 保存抽奖结果
+    var prizeName = $('#option_slotPrize a[data-prizeid=' + pendingPrizeId + '] div').text();
+    var winnersWithPhone = pendingWinners.map(function (winner) {
+        var originalUser = userArray.find(function (u) {
+            return u.Id == winner.id;
         });
+        return {
+            id: winner.id,
+            name: winner.name,
+            phone: originalUser ? originalUser.Phone : ''
+        };
+    });
 
-        saveLotteryResult(pendingPrizeId, prizeName, winnersWithPhone);
+    saveLotteryResult(pendingPrizeId, prizeName, winnersWithPhone);
 
-        // 从用户数组中永久移除中奖人员
-        var removedCount = 0;
-        var newUserArray = [];
+    // 从用户数组中永久移除中奖人员
+    var removedCount = 0;
+    var newUserArray = [];
 
-        for (var i = 0; i < userArray.length; i++) {
-            var isWinner = false;
+    for (var i = 0; i < userArray.length; i++) {
+        var isWinner = false;
 
-            for (var j = 0; j < pendingWinners.length; j++) {
-                if (userArray[i].Id == pendingWinners[j].id) {
-                    isWinner = true;
-                    removedCount++;
-                    break;
-                }
-            }
-
-            if (!isWinner) {
-                newUserArray.push(userArray[i]);
-            }
-        }
-
-        userArray = newUserArray;
-
-        // 更新奖项显示
-        updatePrizeCountDisplay(pendingPrizeId, newCount);
-
-        // 更新数组数据
-        for (var i = 0; i < prizeArray.length; i++) {
-            if (prizeArray[i].Id == pendingPrizeId) {
-                prizeArray[i].Count = newCount;
+        for (var j = 0; j < pendingWinners.length; j++) {
+            if (userArray[i].Id == pendingWinners[j].id) {
+                isWinner = true;
+                removedCount++;
                 break;
             }
         }
 
-        localStorage.DaxPrize = JSON.stringify(prizeArray);
+        if (!isWinner) {
+            newUserArray.push(userArray[i]);
+        }
+    }
 
-        totalWinnerCount += pendingWinnerCount;
+    userArray = newUserArray;
 
-        localStorage.setItem("DaxFans", JSON.stringify(userArray));
+    // 更新奖项显示
+    updatePrizeCountDisplay(pendingPrizeId, newCount);
 
-        isLotteryConfirmed = true;
+    // 更新数组数据
+    for (var i = 0; i < prizeArray.length; i++) {
+        if (prizeArray[i].Id == pendingPrizeId) {
+            prizeArray[i].Count = newCount;
+            break;
+        }
+    }
 
-        updateLotteryInfo();
+    localStorage.DaxPrize = JSON.stringify(prizeArray);
 
-        CommonShowInfo("已确认" + pendingWinnerCount + "名中奖者，并已从抽奖池中移除", 1);
+    totalWinnerCount += pendingWinnerCount;
 
-        pendingWinners = [];
-        pendingWinnerCount = 0;
-        pendingPrizeId = 0;
+    localStorage.setItem("DaxFans", JSON.stringify(userArray));
 
-        checkAndShowExportButton();
+    isLotteryConfirmed = true;
 
-        if (newCount <= 0 && isAutoSequence) {
+    updateLotteryInfo();
+
+    CommonShowInfo("已确认" + pendingWinnerCount + "名中奖者，并已从抽奖池中移除", 1);
+
+    pendingWinners = [];
+    pendingWinnerCount = 0;
+    pendingPrizeId = 0;
+
+    checkAndShowExportButton();
+
+    if (newCount <= 0 && isAutoSequence) {
         setTimeout(function () {
             currentAwardIndex++;
             if (currentAwardIndex < awardSequence.length) {
                 initCurrentAward();
                 CommonShowInfo("当前奖项已抽完，已切换到：" + awardSequence[currentAwardIndex].name + "，请点击'开始抽奖'按钮继续", 1);
-                // *** 不再自动开始，只是提示 ***
             } else {
                 autoSequenceCompleted = true;
                 CommonShowInfo("🎉 所有奖项已全部抽完！", 1);
@@ -729,9 +729,12 @@ $('#showPrizeUser').on('click', function(e) {
     };
 
     // ========== 新增：检查并切换到下一奖项函数 ==========
-    // ========== 修改后的：检查并切换到下一奖项函数（不自动开始） ==========
+// ========== 修改后的：检查并切换到下一奖项函数（不自动开始） ==========
 var checkAndSwitchToNextAward = function() {
-    console.log("检查并切换到下一奖项");
+    console.log("=== 检查并切换到下一奖项 ===");
+    console.log("当前奖项索引:", currentAwardIndex);
+    console.log("奖项序列:", awardSequence);
+    console.log("当前奖项:", awardSequence[currentAwardIndex]);
 
     if (autoSequenceCompleted) {
         console.log("所有奖项已抽完");
@@ -739,15 +742,23 @@ var checkAndSwitchToNextAward = function() {
     }
 
     var currentAward = awardSequence[currentAwardIndex];
-    if (!currentAward) return;
+    if (!currentAward) {
+        console.error("当前奖项不存在!");
+        return;
+    }
 
     // 获取当前奖项剩余名额
     var $prizeItem = $('#option_slotPrize a[data-prizeid=' + currentAward.id + '] label');
     var remainingCount = $prizeItem.length ? parseInt($prizeItem.html()) : currentAward.count;
 
-    console.log("当前奖项:", currentAward.name, "剩余名额:", remainingCount);
+    console.log("当前奖项:", currentAward.name, "(ID:" + currentAward.id + ")", "剩余名额:", remainingCount);
 
     if (remainingCount <= 0) {
+        console.log(currentAward.name + "已抽完，准备切换到下一奖项");
+
+        // 保存当前奖项名称用于提示
+        var completedAwardName = currentAward.name;
+
         // 当前奖项已抽完，切换到下一奖项
         currentAwardIndex++;
 
@@ -757,6 +768,16 @@ var checkAndSwitchToNextAward = function() {
             prizeID = nextAward.id;
             prizeNumber = nextAward.count;
 
+            console.log("切换到下一奖项:", nextAward.name, "(ID:" + nextAward.id + ")");
+
+            // 验证顺序是否正确
+            console.log("顺序验证:");
+            for (var i = 0; i < awardSequence.length; i++) {
+                var award = awardSequence[i];
+                var marker = (i === currentAwardIndex) ? "← 当前" : "";
+                console.log((i + 1) + ". " + award.name + " (ID:" + award.id + ")" + marker);
+            }
+
             // 更新界面显示
             updateLotteryInfoDisplay();
 
@@ -764,15 +785,13 @@ var checkAndSwitchToNextAward = function() {
             updateLotteryButton();
 
             // 提示用户需要手动点击开始
-            CommonShowInfo("当前奖项已抽完，已切换到：" + nextAward.name + "，点击'开始抽奖'按钮开始抽取" + nextAward.count + "人", 1);
+            CommonShowInfo(completedAwardName + "已抽完，已切换到：" + nextAward.name + "，点击'开始抽取" + nextAward.name + "'按钮开始抽取" + nextAward.count + "人", 1);
 
-            console.log("已切换到下一奖项:", nextAward.name);
-
-            // *** 移除了自动开始下一轮抽奖的代码 ***
-            // 不再自动开始，等待用户手动点击开始抽奖按钮
+            console.log("切换完成，按钮应显示: 开始抽取" + nextAward.name);
 
         } else {
             // 所有奖项已抽完
+            console.log("所有奖项已抽完");
             autoSequenceCompleted = true;
             updateLotteryButton();
             CommonShowInfo("🎉 所有奖项已全部抽完！", 1);
@@ -785,7 +804,7 @@ var checkAndSwitchToNextAward = function() {
     } else {
         // 当前奖项还有剩余名额
         console.log("当前奖项还有剩余名额，等待用户点击开始");
-        CommonShowInfo(currentAward.name + "还有" + remainingCount + "个名额，请点击'开始抽奖'继续", 1);
+        CommonShowInfo(currentAward.name + "还有" + remainingCount + "个名额，请点击'开始抽取" + currentAward.name + "'继续", 1);
     }
 };
 
@@ -804,6 +823,9 @@ var clearLotteryHistory = function() {
 
     // 1. 清除本地存储中的抽奖结果
     localStorage.removeItem("LotteryResults");
+    //不删除！！！
+    localStorage.removeItem("DaxFans"); // 清除用户数据
+    localStorage.removeItem("DaxPrize"); // 清除奖项数据
 
     // 2. 重置所有奖项数量到初始值
     awardSequence.forEach(function(award) {
@@ -855,13 +877,16 @@ var clearLotteryHistory = function() {
 
     // 10. 隐藏按钮和状态
     $('#exportBtn').hide();
-    $('#clearHistoryBtn').hide();
+
     $('.lottery-info').removeClass('has-winners').removeClass('all-completed');
     $('#completedText').remove();
 
     console.log("历史记录已清空，奖项已重置");
     CommonShowInfo("抽奖历史已清空，所有奖项数量已重置！", 1);
 };
+
+
+
 
     // ========== 初始化函数 ==========
 
@@ -954,56 +979,175 @@ var clearLotteryHistory = function() {
     });
 
     // ========== 数据加载函数 ==========
-    var GetPrize = function () {
-        console.log("开始加载奖项数据...");
-        StorageForGetReful("DaxPrize","data/GetPrize.json",GetDaxPrize);
+var GetPrize = function () {
+    console.log("开始加载奖项数据...");
+    StorageForGetReful("DaxPrize","data/GetPrize.json",GetDaxPrize);
 
-        function GetDaxPrize(data) {
-            console.log("奖项数据加载完成:", data);
-            if (data && data.length > 0) {
-                prizeArray=data;
-                $('#option_slotPrize').empty();
-                $(data).each(function (index, element) {
-                    if(element.Id==2005){
-                        $('#option_slotPrize').append('<a data-prizeid="' + element.Id + '" data-prizename="' + element.Name + '" data-amount="' + element.Count + '"><div>' + element.Name + '</div> <span style="visibility: hidden;">剩<label>' + element.Count + '</label>名</span></a>');
-                    }else {
-                        $('#option_slotPrize').append('<a data-prizeid="' + element.Id + '" data-prizename="' + element.Name + '" data-amount="' + element.Count + '"><div>' + element.Name + '</div> <span>剩<label>' + element.Count + '</label>名</span></a>');
+    function GetDaxPrize(data) {
+        console.log("奖项数据加载完成:", data);
+
+        // 定义正确的奖项顺序
+        var correctAwardOrder = [
+            { id: 2005, name: "特别奖", count: 30 },
+            { id: 2001, name: "三等奖", count: 10 },
+            { id: 2002, name: "二等奖", count: 5 },
+            { id: 2003, name: "一等奖", count: 1 }
+        ];
+
+        if (data && data.length > 0) {
+            prizeArray = data;
+            $('#option_slotPrize').empty();
+
+            // 调试：打印所有奖项
+            console.log("所有奖项数据:");
+            $(data).each(function (index, element) {
+                console.log("奖项", index, ":", element.Id, element.Name, element.Count);
+            });
+
+            // 1. 先按正确顺序创建界面元素
+            correctAwardOrder.forEach(function(correctAward) {
+                // 在数据中查找对应的奖项
+                var awardData = data.find(function(item) {
+                    return item.Id == correctAward.id;
+                });
+
+                // 如果数据中存在该奖项，使用数据中的数量，否则使用默认数量
+                var count = awardData ? awardData.Count : correctAward.count;
+                var name = awardData ? awardData.Name : correctAward.name;
+
+                if(correctAward.id == 2005){
+                    $('#option_slotPrize').append('<a data-prizeid="' + correctAward.id + '" data-prizename="' + name + '" data-amount="' + count + '"><div>' + name + '</div> <span style="visibility: hidden;">剩<label>' + count + '</label>名</span></a>');
+                } else {
+                    $('#option_slotPrize').append('<a data-prizeid="' + correctAward.id + '" data-prizename="' + name + '" data-amount="' + count + '"><div>' + name + '</div> <span>剩<label>' + count + '</label>名</span></a>');
+                }
+            });
+
+            // 2. 创建过滤并排序后的prizeArray（去掉特等奖2004）
+            var filteredPrizeArray = data.filter(function(prize) {
+                return prize.Id !== 2004; // 过滤掉特等奖
+            });
+
+            // 按正确顺序排序
+            var prizeOrderMap = {
+                2005: 1, // 特别奖 - 第1位
+                2001: 2, // 三等奖 - 第2位
+                2002: 3, // 二等奖 - 第3位
+                2003: 4  // 一等奖 - 第4位
+            };
+
+            filteredPrizeArray.sort(function(a, b) {
+                var orderA = prizeOrderMap[a.Id] || 999;
+                var orderB = prizeOrderMap[b.Id] || 999;
+                return orderA - orderB;
+            });
+
+            // 3. 更新全局的prizeArray，确保顺序正确
+            prizeArray = filteredPrizeArray;
+
+            // 4. 更新 awardSequence，确保顺序和数量正确
+            awardSequence = correctAwardOrder.map(function(correctAward) {
+                // 在过滤后的数据中查找对应奖项
+                var awardData = filteredPrizeArray.find(function(item) {
+                    return item.Id == correctAward.id;
+                });
+
+                return {
+                    id: correctAward.id,
+                    name: correctAward.name,
+                    count: awardData ? awardData.Count : correctAward.count
+                };
+            });
+
+            console.log("强制排序后的 awardSequence:");
+            awardSequence.forEach(function(award, index) {
+                console.log("第" + (index + 1) + "位: " + award.name +
+                           " (ID:" + award.id + ")" +
+                           " 数量:" + award.count);
+            });
+
+            // 5. 确保奖项数量不为0（如果数据中为0，使用默认值）
+            var hasZeroCount = false;
+            awardSequence.forEach(function(award) {
+                if (award.count <= 0) {
+                    hasZeroCount = true;
+                    console.warn("奖项" + award.name + "数量为0，将使用默认值");
+
+                    // 设置默认值
+                    switch(award.id) {
+                        case 2005: award.count = 30; break;
+                        case 2001: award.count = 10; break;
+                        case 2002: award.count = 5; break;
+                        case 2003: award.count = 1; break;
                     }
-                });
 
-                // 初始化第一个奖项
-                setTimeout(function() {
-                    initCurrentAward();
-                }, 500);
+                    // 更新界面显示
+                    var $prizeItem = $('#option_slotPrize a[data-prizeid=' + award.id + '] label');
+                    if ($prizeItem.length) {
+                        $prizeItem.text(award.count);
+                    }
+                }
+            });
 
-                // 绑定奖项选择事件
-                $('#option_slotPrize a').click(function () {
-                    var $this = $(this);
-                    var prizeId = $this.data('prizeid');
-                    var prizeName = $this.find('div').text();
-
-                    $('#select_slotmachine a')
-                        .text(prizeName)
-                        .data('prizeid', prizeId);
-
-                    prizeID = prizeId;
-                    $('.select_option').slideUp();
-                    updateLotteryInfo();
-                });
-            } else {
-                console.error("奖项数据为空或格式错误");
-                prizeArray = awardSequence.map(function(item) {
-                    return {
-                        Id: item.id,
-                        Name: item.name,
-                        Count: item.count
-                    };
-                });
-                localStorage.setItem("DaxPrize", JSON.stringify(prizeArray));
-                GetPrize();
+            if (hasZeroCount) {
+                console.log("有奖项数量为0，已重置为默认值");
             }
+
+            // 6. 重新初始化当前奖项索引
+            currentAwardIndex = 0;
+            autoSequenceCompleted = false;
+
+            // 7. 设置当前奖项ID和人数
+            if (awardSequence.length > 0) {
+                prizeID = awardSequence[0].id;
+                prizeNumber = awardSequence[0].count;
+            }
+
+            // 8. 初始化第一个奖项
+            setTimeout(function() {
+                console.log("初始化第一个奖项:", awardSequence[0].name, "数量:", awardSequence[0].count);
+                initCurrentAward();
+            }, 500);
+
+            // 9. 绑定奖项选择事件
+            $('#option_slotPrize a').click(function () {
+                var $this = $(this);
+                var prizeId = $this.data('prizeid');
+                var prizeName = $this.find('div').text();
+
+                $('#select_slotmachine a')
+                    .text(prizeName)
+                    .data('prizeid', prizeId);
+
+                prizeID = prizeId;
+                $('.select_option').slideUp();
+                updateLotteryInfo();
+            });
+
+            // 10. 保存排序后的数据到本地存储
+            var sortedPrizeArray = awardSequence.map(function(item) {
+                return {
+                    Id: item.id,
+                    Name: item.name,
+                    Count: item.count
+                };
+            });
+            localStorage.setItem("DaxPrize", JSON.stringify(sortedPrizeArray));
+
+        } else {
+            console.error("奖项数据为空或格式错误");
+            // 使用 awardSequence 创建默认数据（已过滤特等奖）
+            prizeArray = awardSequence.map(function(item) {
+                return {
+                    Id: item.id,
+                    Name: item.name,
+                    Count: item.count
+                };
+            });
+            localStorage.setItem("DaxPrize", JSON.stringify(prizeArray));
+            GetPrize();
         }
-    };
+    }
+};
 
     var GetFans = function () {
         console.log("开始加载用户数据...");
@@ -1229,32 +1373,39 @@ var clearLotteryHistory = function() {
     };
 
     // ========== 导出相关函数 ==========
-    var checkAndShowExportButton = function() {
-        var confirmedCount = getConfirmedWinnerCount();
+    // ========== 修改后的：检查并显示导出/清空按钮函数 ==========
+var checkAndShowExportButton = function() {
+    var confirmedCount = getConfirmedWinnerCount();
 
-        if (confirmedCount > 0) {
-            $('#exportBtn').show();
-            $('#clearHistoryBtn').show();
-            $('.lottery-info').addClass('has-winners');
-        } else {
-            $('#exportBtn').hide();
-            $('#clearHistoryBtn').hide();
-            $('.lottery-info').removeClass('has-winners');
-        }
+    // 新增：确保清空历史按钮初始显示
+    setTimeout(function() {
+        $('#clearHistoryBtn').show();
+    }, 100);
 
-        if (autoSequenceCompleted) {
-            $('.lottery-info').addClass('all-completed');
-            var completedText = `🎉 所有奖项已抽完，已确认 ${confirmedCount} 人中奖`;
-            if (!$('#completedText').length) {
-                $('.lottery-info').prepend('<div id="completedText" style="color:#ffd700;font-size:18px;font-weight:bold;margin-bottom:10px;width:100%;text-align:center;">' + completedText + '</div>');
-            } else {
-                $('#completedText').text(completedText);
-            }
+    console.log("初始化代码加载完成");
+
+    // 导出按钮只在有已确认中奖记录时显示
+    if (confirmedCount > 0) {
+        $('#exportBtn').show();
+        $('.lottery-info').addClass('has-winners');
+    } else {
+        $('#exportBtn').hide();
+        $('.lottery-info').removeClass('has-winners');
+    }
+
+    if (autoSequenceCompleted) {
+        $('.lottery-info').addClass('all-completed');
+        var completedText = `🎉 所有奖项已抽完，已确认 ${confirmedCount} 人中奖`;
+        if (!$('#completedText').length) {
+            $('.lottery-info').prepend('<div id="completedText" style="color:#ffd700;font-size:18px;font-weight:bold;margin-bottom:10px;width:100%;text-align:center;">' + completedText + '</div>');
         } else {
-            $('.lottery-info').removeClass('all-completed');
-            $('#completedText').remove();
+            $('#completedText').text(completedText);
         }
-    };
+    } else {
+        $('.lottery-info').removeClass('all-completed');
+        $('#completedText').remove();
+    }
+};
 
     var exportConfirmedWinners = function() {
         var results = localStorage.getItem("LotteryResults");
@@ -1408,5 +1559,6 @@ var clearLotteryHistory = function() {
     // 延迟初始化显示
     setTimeout(function() {
         updateLotteryInfoDisplay();
+
     }, 1500);
 });
