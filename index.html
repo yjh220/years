@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>桦智工程年会抽奖</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="css/index.css"/>
+</head>
+<body>
+<div id="main">
+    <div id="index">
+        <img src="images/index.jpg" alt="抽奖开屏图片">
+        <a class="clickBtn"></a>
+    </div>
+
+    <!-- ====================== 新增抽奖信息展示区 ====================== -->
+    <div class="lottery-info">
+        <span class="info-item">当前抽奖等级：<em id="current-prize">未选择</em></span>
+        <span class="info-item">剩余可抽人数：<em id="remain-count">0</em></span>
+        <span class="info-item">已中奖总人数：<em id="total-winner">0</em></span>
+        <button id="exportBtn" class="btn export-btn" style="display:none;">导出获奖名单</button>
+        <button id="clearHistoryBtn" class="btn" style="display:none; background:#ff4444; margin-left:10px;">清空历史</button>
+    </div>
+
+    <div data-modulename="slotmachine" class="module" id="slotmachine">
+        <span class="title">摇奖机</span>
+        <div id="tigerBg">
+            <div class="tigerMain"></div>
+        </div>
+        <div id="tigerSelect" class="bgColor1" style="text-align: center; padding: 15px 0;">
+            <!-- 主要抽奖控制按钮 -->
+            <a href="javascript:void(0);" class="btn beginTiger" id="mainLotteryBtn" style="font-size: 20px; padding: 10px 40px; margin-right: 20px;">开始抽奖</a>
+
+                <!-- 隐藏确认名单按钮 -->
+    <!-- <a href="javascript:void(0);" class="btn tiger_submit confirm-btn" style="display: none; font-size: 18px; padding: 10px 30px; background: #28a745;">确认名单</a> -->
+            <!-- 修改确认名单按钮为可选的手动确认（如果需要的话） -->
+
+
+            <!-- 隐藏的音效按钮 -->
+            <button class="sound-toggle" id="effectToggle" style="display: none;"></button>
+            <button class="sound-toggle" id="bgmToggle" style="display: none;"></button>
+
+            <!-- 隐藏的下拉框（功能保留但隐藏） -->
+            <div class="select" id="select_slotmachine" style="display: none;">
+                <a data-prizeid="0" data-amount="0">请选择</a>
+            </div>
+            <div class="select_option" id="option_slotPrize" style="display: none;"></div>
+
+            <div class="select" style="display: none;">
+                <a data-prizeid="0" data-amount="0">请选择</a>
+            </div>
+            <div class="select_option" id="option_slotNumber" style="display: none;"></div>
+
+            <a href="javascript:void(0);" class="resetTiger" style="display: none;">重置抽奖</a>
+        </div>
+        <div id="tigerUser">
+            <span class="prizeTitle">中奖名单</span>
+            <a class="left arrow"><</a>
+            <a class="right arrow">></a>
+
+            <div id="tigerUserBox">
+                <ul></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/jquery.js"></script>
+<script src="js/common.js"></script>
+<script src="js/firework.js"></script>
+<script src="js/index.js"></script>
+
+</body>
+<!-- 音频元素 -->
+<audio id="roll-sound" loop preload="auto">
+    <source src="sounds/roll.mp3" type="audio/mpeg">
+    您的浏览器不支持音频元素
+</audio>
+
+<audio id="win-sound" preload="auto">
+    <source src="sounds/win.mp3" type="audio/mpeg">
+    您的浏览器不支持音频元素
+</audio>
+
+<audio id="bgm-sound" loop preload="auto">
+    <source src="sounds/bgm.mp3" type="audio/mpeg">
+    您的浏览器不支持音频元素
+</audio>
+
+</html>
