@@ -1,0 +1,88 @@
+@charset "utf-8";
+#main {
+    max-width: 980px;
+    width: 100%;
+    height: 740px;
+    margin: auto;
+}
+/*封面*/
+#index {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+}
+
+#index img {
+    width: 100%;
+    height: 100%;
+}
+
+#index a.clickBtn {
+
+    /* 绝对定位：精准匹配图片上的按钮位置 */
+    position: absolute;
+    right: 2%; /* 距离图片右侧的距离（根据实际调整） */
+    bottom: 2%; /* 距离图片底部的距离（根据实际调整） */
+    /* 按钮大小：匹配图片上“开始抽奖”的尺寸 */
+    width: 100px;
+    height:60px;
+    border-radius: 35px; /* 按钮样式：透明（不遮挡图片原有文字）+ 可点击 */
+    background: transparent; /* 背景透明，显示图片本身的“开始抽奖”样式 */
+    border: none; /* 去掉默认边框 */
+    cursor: pointer; /* 鼠标悬浮显示“手”形状 */
+    font-size: 0; /* 隐藏按钮自身文字（用图片文字） */
+
+
+}
+
+/*浏览器提示*/
+#nohtml5 {
+    background: #fff8d4;
+    z-index: 99999;
+    font-size: 14px;
+    height: 50px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    width: 100%;
+    color: #837955;
+    opacity: 0.4;
+}
+
+#nohtml5 div {
+    max-width: 980px;
+    width: 100%;
+    padding-left: 40px;
+    margin: auto;
+    line-height: 50px;
+    background: url(../images/alert.jpg) left no-repeat;
+    height: 50px;
+}
+
+#nohtml5 a {
+    color: #837955;
+    margin-left: 10px;
+}
+
+#nohtml5 div img {
+    position: relative;
+    top: 5px;
+}
+
+.delnohtml5 {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #000;
+    color: #f00;
+    text-align: center;
+    line-height: 20px;
+    top: 15PX;
+    right: 0;
+    cursor: pointer;
+}
