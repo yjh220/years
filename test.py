@@ -292,3 +292,5 @@ with open('data/GetFans.csv', 'w', newline='', encoding='utf-8-sig') as file:
     writer.writerows(data)
 
 print("CSV 文件已创建: data/GetFans.csv")
+
+print("hello yjh!")
